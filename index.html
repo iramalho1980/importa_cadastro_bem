@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor | Excel - Cadastro de Bens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background: linear-gradient(to right, #19547b, #ffd89b);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* Temas de skin */
+        body.skin-ocean {
+            background: linear-gradient(to right, #19547b, #ffd89b);
+        }
+
+        body.skin-midnight {
+            background: linear-gradient(to right, #004e92, #000428);
+        }
+
+        body.skin-forest {
+            background: linear-gradient(to right, #237A57, #093028);
+        }
+
+        body.skin-slate {
+            background: linear-gradient(to right, #283E51, #4B79A1);
+        }
+
+        body.skin-deep {
+            background: linear-gradient(to right, #2C5364, #203A43, #0F2027);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #90EE90, #98FB98);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+        }
+
+        /* Seletor de Skin */
+        .skin-selector {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skin-selector-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .skin-selector-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .skin-dropdown {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 10px;
+            z-index: 1000;
+            min-width: 200px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .skin-dropdown.active {
+            display: block;
+        }
+
+        .skin-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .skin-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .skin-preview {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .skin-option-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* SPINNER COM PROGRESSO */
+        .spinner-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .spinner-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #90EE90;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner-text {
+            color: #ffffff;
+            font-size: 1.2rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .spinner-percentage {
+            color: #90EE90;
+            font-size: 2rem;
+            font-weight: 700;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .progress-bar-spinner {
+            width: 300px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-spinner-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #90EE90, #98FB98);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        /* Step indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            opacity: 1;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-number {
+            background: #90EE90;
+            border-color: #90EE90;
+            color: #1a1a1a;
+            transform: scale(1.1);
+        }
+
+        .step span {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .step.active span {
+            color: #90EE90;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #90EE90, #98FB98);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-header:hover {
+            opacity: 0.8;
+        }
+
+        .collapsible-header.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+
+        .arrow {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .collapsible-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-top: 20px;
+        }
+
+        .collapsible-content:not(.expanded) {
+            max-height: 0;
+            padding-top: 0;
+            overflow: hidden;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #90EE90, #98FB98);
+            padding: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-wrapper:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(144, 238, 144, 0.3);
+        }
+
+        .file-input {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-button {
+            display: block;
+            padding: 15px 30px;
+            background: rgba(26, 26, 26, 0.9);
+            color: #90EE90;
+            border: none;
+            border-radius: 13px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-button:hover {
+            background: rgba(26, 26, 26, 0.7);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(144, 238, 144, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            display: none;
+        }
+
+        .mapping-section {
+            display: none;
+        }
+
+        .mapping-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #90EE90;
+        }
+
+        .mapping-grid-simplified {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .mapping-row {
+            display: grid;
+            grid-template-columns: 200px 1fr 100px;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .mapping-row label {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .mapping-row select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            color: #ffffff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mapping-row select:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(144, 238, 144, 0.5);
+        }
+
+        .mapping-row select:focus {
+            background: rgba(144, 238, 144, 0.1);
+            border-color: #90EE90;
+            outline: none;
+        }
+
+        .mapping-row select option {
+            background-color: #2d4a3e;
+            color: #ffffff;
+        }
+
+        .mapping-row select option:hover {
+            background-color: #90EE90;
+            color: #1a1a1a;
+        }
+
+        .mapping-row.mapped {
+            background: rgba(0, 128, 0, 0.3);
+            border-color: #32CD32;
+            border: 1px solid #32CD32;
+        }
+
+        .mapping-row.mapped label {
+            color: #e0ffe0;
+            font-weight: 600;
+        }
+
+        .mapping-row.required.mapped {
+            background: rgba(255, 165, 0, 0.3);
+            border-color: #ffa500;
+            border: 1px solid #ffa500;
+        }
+
+        .mapping-row.required.mapped label {
+            color: #ffe4b5;
+            font-weight: 600;
+        }
+
+        .remove-mapping-btn {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid rgba(255, 68, 68, 0.4);
+            color: #ff4444;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .remove-mapping-btn:hover {
+            background: rgba(255, 68, 68, 0.3);
+            border-color: rgba(255, 68, 68, 0.6);
+        }
+
+        .mapping-row.required {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+        }
+
+        .mapping-row.required label {
+            color: #ffcccc;
+            font-weight: 600;
+        }
+
+        .mapping-row.required label::after {
+            content: " *";
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .mapping-pair {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(144, 238, 144, 0.1);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(144, 238, 144, 0.3);
+        }
+
+        .remove-btn {
+            background: rgba(255, 68, 68, 0.3);
+            border: none;
+            color: #ff4444;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 68, 68, 0.5);
+            transform: scale(1.1);
+        }
+
+        .data-table-container {
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: rgba(144, 238, 144, 0.2);
+            color: #98FB98;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 2px solid rgba(144, 238, 144, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table th.required-column {
+            background: rgba(255, 0, 0, 0.3);
+            color: #ffcccc;
+        }
+
+        .data-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table td input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(144, 238, 144, 0.2);
+            color: #ffffff;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .data-table td input:focus {
+            background: rgba(144, 238, 144, 0.1);
+            border-color: #90EE90;
+            outline: none;
+        }
+
+        .data-table td.required-column {
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            background: rgba(144, 238, 144, 0.2);
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            color: #98FB98;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: rgba(144, 238, 144, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 60px;
+            text-align: center;
+        }
+
+        .pagination-input:focus {
+            background: rgba(144, 238, 144, 0.1);
+            border-color: #90EE90;
+            outline: none;
+        }
+
+        .bulk-fill-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .bulk-fill-title {
+            font-size: 1.2rem;
+            color: #98FB98;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bulk-fill-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .bulk-fill-input {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .bulk-fill-input:focus {
+            background: rgba(144, 238, 144, 0.1);
+            border-color: #90EE90;
+            outline: none;
+        }
+
+        .bulk-fill-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .bulk-fill-btn {
+            background: rgba(144, 238, 144, 0.2);
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            color: #98FB98;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .bulk-fill-btn:hover:not(:disabled) {
+            background: rgba(144, 238, 144, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .bulk-fill-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .column-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            min-width: 200px;
+        }
+
+        .column-selector:focus {
+            background: rgba(144, 238, 144, 0.1);
+            border-color: #90EE90;
+            outline: none;
+        }
+
+        .column-selector option {
+            background-color: #2d4a3e;
+            color: #ffffff;
+        }
+
+        .column-selector option:hover {
+            background-color: #90EE90;
+            color: #1a1a1a;
+        }
+
+        .bulk-fill-info {
+            background: rgba(144, 238, 144, 0.1);
+            border: 1px solid rgba(144, 238, 144, 0.3);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .bulk-fill-info strong {
+            color: #98FB98;
+        }
+
+        .export-btn {
+            background: linear-gradient(45deg, #90EE90, #98FB98);
+            border: none;
+            color: #1a1a1a;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(144, 238, 144, 0.3);
+        }
+
+        .export-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auto-map-btn {
+            background: rgba(100, 200, 255, 0.3);
+            border: 1px solid rgba(100, 200, 255, 0.5);
+            color: #64c8ff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .auto-map-btn:hover {
+            background: rgba(100, 200, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .auto-map-info {
+            background: rgba(100, 200, 255, 0.1);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .auto-map-info strong {
+            color: #64c8ff;
+        }
+
+        @media (max-width: 768px) {
+            .mapping-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .bulk-fill-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bulk-fill-input,
+            .column-selector {
+                min-width: auto;
+            }
+
+            .skin-selector {
+                position: static;
+                margin-bottom: 20px;
+            }
+
+            .step-indicator {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Conversor | Excel - Cadastro de Bens</h1>
+            <p>Importe sua planilha, mapeie os campos e exporte para TXT</p>
+            
+            <!-- Seletor de Skin -->
+            <div class="skin-selector">
+                <button class="skin-selector-btn" id="skinToggleBtn" title="Selecionar tema">⚙️</button>
+                <div class="skin-dropdown" id="skinDropdown">
+                    <div class="skin-option" onclick="applySkin('ocean')">
+                        <div class="skin-preview" style="background: linear-gradient(to right, #19547b, #ffd89b);"></div>
+                        <span class="skin-option-label">Ocean</span>
+                    </div>
+                    <div class="skin-option" onclick="applySkin('midnight')">
+                        <div class="skin-preview" style="background: linear-gradient(to right, #004e92, #000428);"></div>
+                        <span class="skin-option-label">Midnight</span>
+                    </div>
+                    <div class="skin-option" onclick="applySkin('forest')">
+                        <div class="skin-preview" style="background: linear-gradient(to right, #237A57, #093028);"></div>
+                        <span class="skin-option-label">Forest</span>
+                    </div>
+                    <div class="skin-option" onclick="applySkin('slate')">
+                        <div class="skin-preview" style="background: linear-gradient(to right, #283E51, #4B79A1);"></div>
+                        <span class="skin-option-label">Slate</span>
+                    </div>
+                    <div class="skin-option" onclick="applySkin('deep')">
+                        <div class="skin-preview" style="background: linear-gradient(to right, #2C5364, #203A43, #0F2027);"></div>
+                        <span class="skin-option-label">Deep Ocean</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <span>Importar</span>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <span>Mapear</span>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <span>Exportar</span>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Seção de Upload -->
+        <div class="glass-card" id="uploadSectionCard">
+            <div class="collapsible-header" id="uploadHeader">
+                <h2 class="mapping-title">1. Selecione sua planilha Excel</h2>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="collapsible-content expanded" id="uploadContent">
+                <div class="upload-section">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.csv,.xlsm,.ods">
+                        <label for="fileInput" class="file-input-button">
+                            📁 Selecione seu arquivo Excel
+                        </label>
+                    </div>
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Mapeamento -->
+        <div class="glass-card" id="mappingSectionCard" style="display: none;">
+            <div class="collapsible-header" id="mappingHeader">
+                <h2 class="mapping-title">2. Mapeie os campos</h2>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="collapsible-content" id="mappingContent">
+                <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="auto-map-btn" onclick="autoMapFields()">🔄 Mapear Automaticamente</button>
+                    <button class="auto-map-btn" onclick="clearAllMappings()" style="background: rgba(255, 100, 100, 0.3); border-color: rgba(255, 100, 100, 0.5); color: #ff6464;">🗑️ Limpar Mapeamentos</button>
+                </div>
+                <div id="autoMapInfo" class="auto-map-info" style="display: none;"></div>
+                
+                <div id="simplifiedMappingContainer" style="display: none;">
+                    <div id="mappingRowsContainer" class="mapping-grid-simplified"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Exportação -->
+        <div class="glass-card" id="exportSectionCard" style="display: none;">
+            <div class="collapsible-header" id="exportHeader">
+                <h2 class="mapping-title">3. Visualize e Exporte</h2>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="collapsible-content" id="exportContent">
+                <!-- Tabela de dados -->
+                <div id="dataTableContainer" class="data-table-container">
+                    <h3 style="color: #98FB98; margin-bottom: 15px;">Dados Processados</h3>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead id="tableHeader"></thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" id="firstPageBtn" onclick="goToPage(1)">⏮️ Primeira</button>
+                        <button class="pagination-btn" id="prevPageBtn" onclick="goToPage(currentPage - 1)">◀️ Anterior</button>
+                        <input type="number" class="pagination-input" id="pageInput" min="1" onchange="goToPage(parseInt(this.value))">
+                        <span style="color: rgba(255, 255, 255, 0.8);" id="paginationInfo">Página 1 de 1</span>
+                        <button class="pagination-btn" id="nextPageBtn" onclick="goToPage(currentPage + 1)">Próxima ▶️</button>
+                        <button class="pagination-btn" id="lastPageBtn" onclick="goToPage(totalPages)">Última ⏭️</button>
+                    </div>
+                </div>
+
+                <!-- Preenchimento em lote -->
+                <div id="bulkFillSection" class="bulk-fill-section">
+                    <div class="bulk-fill-title">📝 Preenchimento em Lote</div>
+                    <div class="bulk-fill-controls">
+                        <select id="columnSelector" class="column-selector"></select>
+                        <input type="text" id="bulkFillValue" class="bulk-fill-input" placeholder="Digite o valor...">
+                        <button class="bulk-fill-btn" onclick="fillEmptyFields()">Preencher Vazios</button>
+                        <button class="bulk-fill-btn" onclick="fillAllFields()">Preencher Todos</button>
+                    </div>
+                    <div id="bulkFillInfo" class="bulk-fill-info" style="display: none;">
+                        <strong>Dica:</strong> Use "Preencher Vazios" para completar apenas campos vazios, ou "Preencher Todos" para substituir todos os valores.
+                    </div>
+                </div>
+
+                <button class="export-btn" id="exportBtn" onclick="exportToTxt()">
+                    📄 Gerar arquivo TXT
+                </button>
+                <div id="exportStatus" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+
+        <!-- Seção de Download do Conjunto de Dados -->
+        <div class="glass-card">
+            <div class="header" style="margin-bottom: 20px;">
+                <h2 style="font-size: 1.5rem; color: #90EE90; margin-bottom: 10px;">Conjunto de Dados</h2>
+                <p style="color: rgba(255, 255, 255, 0.8); font-size: 1rem;">
+                    Faça o download do arquivo XML com o conjunto de dados de bens patrimoniais.
+                </p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="https://drive.google.com/uc?export=download&id=1AJQu0z5gB2k4y6Q-_0czj6HOts8xyDfw" 
+                   download="Conj_Dados_Bens_Patrionio.xml" 
+                   class="export-btn" 
+                   style="display: inline-block; text-decoration: none; margin: 10px;">
+                    📥 Download Conjunto de dados
+                </a>
+                
+                <div style="margin-top: 15px; padding: 15px; background: rgba(144, 238, 144, 0.1); border-radius: 10px; border: 1px solid rgba(144, 238, 144, 0.3);">
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin: 0;">
+                        <strong style="color: #98FB98;">Arquivo:</strong> Conj_Dados_Bens_Patrionio.xml<br>
+                        <strong style="color: #98FB98;">Formato:</strong> XML (Extensible Markup Language)<br>
+                        <strong style="color: #98FB98;">Descrição:</strong> Conjunto de dados estruturados para importação de bens patrimoniais
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spinner com Progresso -->
+    <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner"></div>
+        <div class="spinner-text" id="spinnerText">Processando...</div>
+        <div class="spinner-percentage" id="spinnerPercentage">0%</div>
+        <div class="progress-bar-spinner">
+            <div class="progress-bar-spinner-fill" id="spinnerProgressFill"></div>
+        </div>
+    </div>
+
+    <script>
+        // Campos modelo baseados na planilha analisada
+        const modelFields = [
+            'CODIGO EMPRESA', 'COD BEM', 'IDENTIFICADOR', 'DESCRIÇÃO', 'Data Aquisição',
+            'Data baixa', 'CONTA PATRIMONIAL', 'CENTRO DE CUSTO', 'HISTORICO', 'TIPO (B)',
+            'CLASSIFICAÇÃO (I)', 'VINCULADO A', 'ORIUNDO DO ATIVO CIRCULANTE', 'FUNÇÃO',
+            'VLR DA AQUISIÇÃO', 'ALIQUOTA ICMS', 'VLR DO ICMS', 'VLR ICMS - SUBST TRIB',
+            'VLR ICMS - DIF ALIQUOTA', 'VLR ICMS S FRETE', 'VALOR TOT DO CRED DO ICMS',
+            'ALIQUOTA PIS', 'VLR DO CRED PIS', 'ALIQUOTA COFINS', 'VLR CRED COFINS',
+            'VLR ORIGINAL', 'CORREÇÃO MON  ACUM', 'VLR RESIDUAL', 'BASE DE CALC DA DEPREC',
+            'CALC CRED ICMS', 'CALC CRED PIS E COFINS', 'DEPRECIAR BEM (S/N)',
+            'CALC FISCAL DEPREC - 100% NO MÊS INICIO DEPREC', 'CALC FISCAL - DATA INICIO',
+            'CALC FISCAL - INFO DEPREC ACUM ATÉ (S/N)', 'CALC FISCAL - INFO DEPREC ACUM ATE (DATA)',
+            'CALC FISCAL VLR DEPREC ACUM', 'CALC FISCAL TX ALTERNATIVA',
+            'CALC SOCIE DATA INICIO', 'CALC SOCIETARIO - INFO DEPREC ACUM ATÉ',
+            'CALC SOCIE - DEPREC ACUM ATE', 'CALC SOCIE - VLR DEPREC ACUM',
+            'CALC SOCIE - TX INICIAL', 'DOC FISCAL - NUMERO', 'DOC FISCAL - SERIE',
+            'DOC FISCAL - DATA EMISSÃO', 'DOC FISCAL - ESPECIE', 'DOC FISCAL - CHAVE NFE',
+            'DOC FISCAL - FORN', 'DOC FISCAL - EMITENTE', 'DOC FISCAL PROD',
+            'DOC FISCAL - SEQUENCIAL DO ITEM', 'APROPIAR CRED SOMENTE BEM RESULT',
+            'CRED ICMS PRO CARGAS', 'PROD AQUIQ ESTADO',
+            'UTIL CRED ICMS MÊS DE INICIO EFETIVO ATIV', 'MÊS INICIO EFETIVO ATIV',
+            'RECOLHER DEBITO ICMS', 'PIS E COFINS CALC COM BASE ENC DE DEPREC',
+            'PIS E COFINS CALC BASE VLR AQUIS', 'PIS COFINS INICIO CALC',
+            'PIS COFINS ORIGEM BEM', 'PIS COFINS BASE CREDITO', 'PIS COFINS ESPECIE',
+            'PIS COFINS TIPO UTILIZADO', 'PIS COFINS BASE CALC', 'PIS COFINS PEIODO CALC',
+            'PIS E COFINS CST', 'PIS E COFINS VINC DO CREDITO', 'PIS E COFINS DESC COMPLEM',
+            'PIS E COFINS POSSUI PROCESSO REFER', 'PIS E COFINS IDENT',
+            'PIS E COFINS ORIGEM', 'PIS E COFINS SEÇÃO JURIDICA', 'PIS E COFINS VARA',
+            'PIS E COFINS NAT DA AÇÃO', 'PIS E COFINS DATA DA SENT OU DESPACHO',
+            'PIS E COFINS DESCRIÇÃO DO PROCESSO', 'DATA DE CAD DO BEM',
+            'QUANTIDADE DO BEM'
+        ];
+
+        // Campos obrigatórios
+        const requiredFields = [
+            'CODIGO EMPRESA', 'COD BEM', 'IDENTIFICADOR', 'DESCRIÇÃO', 'Data Aquisição',
+            'CONTA PATRIMONIAL', 'CENTRO DE CUSTO', 'HISTORICO', 'TIPO (B)', 'CLASSIFICAÇÃO (I)',
+            'FUNÇÃO', 'VLR DA AQUISIÇÃO', 'VLR ORIGINAL', 'BASE DE CALC DA DEPREC',
+            'CALC FISCAL - DATA INICIO', 'CALC FISCAL TX ALTERNATIVA', 'DATA DE CAD DO BEM',
+            'QUANTIDADE DO BEM', 'DEPRECIAR BEM (S/N)',
+            'CALC FISCAL - INFO DEPREC ACUM ATÉ (S/N)', 'CALC FISCAL - INFO DEPREC ACUM ATE (DATA)',
+            'CALC FISCAL VLR DEPREC ACUM'
+        ];
+
+        let excelData = null;
+        let excelColumns = [];
+        let mappings = {};
+        let processedData = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        const itemsPerPage = 20;
+
+        // Função para mostrar spinner
+        function showSpinner(text = "Processando...") {
+            document.getElementById('spinnerOverlay').classList.add('active');
+            document.getElementById('spinnerText').textContent = text;
+            updateSpinnerProgress(0);
+        }
+
+        // Função para esconder spinner
+        function hideSpinner() {
+            document.getElementById('spinnerOverlay').classList.remove('active');
+        }
+
+        // Função para atualizar progresso do spinner
+        function updateSpinnerProgress(percentage) {
+            document.getElementById('spinnerPercentage').textContent = Math.round(percentage) + '%';
+            document.getElementById('spinnerProgressFill').style.width = percentage + '%';
+        }
+
+        // Função para alternar seletor de skin
+        document.getElementById('skinToggleBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('skinDropdown');
+            dropdown.classList.toggle('active');
+        });
+
+        // Fechar dropdown ao clicar fora
+        document.addEventListener('click', function() {
+            const dropdown = document.getElementById('skinDropdown');
+            dropdown.classList.remove('active');
+        });
+
+        // Função para aplicar skin
+        function applySkin(skinName) {
+            document.body.className = '';
+            if (skinName !== 'default') {
+                document.body.classList.add('skin-' + skinName);
+            }
+            localStorage.setItem('selectedSkin', skinName);
+            document.getElementById('skinDropdown').classList.remove('active');
+        }
+
+        // Restaurar skin salva ou aplicar Ocean como padrão
+        window.addEventListener('load', function() {
+            const savedSkin = localStorage.getItem('selectedSkin') || 'ocean';
+            applySkin(savedSkin);
+        });
+
+        // Funções para recolher/expandir seções
+        function toggleCollapsible(headerId, contentId) {
+            const header = document.getElementById(headerId);
+            const content = document.getElementById(contentId);
+            header.classList.toggle('collapsed');
+            content.classList.toggle('expanded');
+        }
+
+        // Event listeners para as seções recolhíveis
+        document.getElementById('uploadHeader').addEventListener('click', () => {
+            toggleCollapsible('uploadHeader', 'uploadContent');
+        });
+
+        document.getElementById('mappingHeader').addEventListener('click', () => {
+            toggleCollapsible('mappingHeader', 'mappingContent');
+        });
+
+        document.getElementById('exportHeader').addEventListener('click', () => {
+            toggleCollapsible('exportHeader', 'exportContent');
+        });
+
+        // Função para atualizar progresso
+        function updateProgress(percentage) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+
+        // Função para atualizar steps
+        function updateSteps(activeStep) {
+            document.querySelectorAll('.step').forEach((step, index) => {
+                if (index + 1 <= activeStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        }
+
+        // ALGORITMO DE SIMILARIDADE LEVENSHTEIN
+        function levenshteinDistance(str1, str2) {
+            const len1 = str1.length;
+            const len2 = str2.length;
+            const matrix = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(0));
+
+            for (let i = 0; i <= len1; i++) matrix[0][i] = i;
+            for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+
+            for (let j = 1; j <= len2; j++) {
+                for (let i = 1; i <= len1; i++) {
+                    const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                    matrix[j][i] = Math.min(
+                        matrix[j][i - 1] + 1,
+                        matrix[j - 1][i] + 1,
+                        matrix[j - 1][i - 1] + indicator
+                    );
+                }
+            }
+
+            return matrix[len2][len1];
+        }
+
+        // Calcular similaridade percentual
+        function calculateSimilarity(str1, str2) {
+            const maxLen = Math.max(str1.length, str2.length);
+            if (maxLen === 0) return 100;
+            const distance = levenshteinDistance(str1.toUpperCase(), str2.toUpperCase());
+            return ((maxLen - distance) / maxLen) * 100;
+        }
+
+        // MAPEAMENTO AUTOMÁTICO DE CAMPOS
+        function autoMapFields() {
+            if (!excelColumns || excelColumns.length === 0) {
+                alert('Por favor, carregue um arquivo primeiro');
+                return;
+            }
+
+            showSpinner('Mapeando campos automaticamente...');
+            
+            // Limpar mapeamentos anteriores
+            mappings = {};
+            
+            let mappedCount = 0;
+            const totalFields = modelFields.length;
+            const similarityThreshold = 60; // Mínimo 60% de similaridade
+
+            // Processar cada campo do modelo
+            modelFields.forEach((modelField, index) => {
+                let bestMatch = null;
+                let bestSimilarity = similarityThreshold;
+
+                // Comparar com cada coluna do Excel
+                excelColumns.forEach(excelCol => {
+                    const similarity = calculateSimilarity(modelField, excelCol);
+                    
+                    if (similarity > bestSimilarity && !Object.values(mappings).includes(excelCol)) {
+                        bestSimilarity = similarity;
+                        bestMatch = excelCol;
+                    }
+                });
+
+                if (bestMatch) {
+                    mappings[modelField] = bestMatch;
+                    mappedCount++;
+                }
+
+                // Atualizar progresso
+                const progress = (index / totalFields) * 100;
+                updateSpinnerProgress(progress);
+            });
+
+            hideSpinner();
+
+            // Renderizar mapeamento e mostrar resultado
+            renderSimplifiedMapping();
+            displayMappings();
+            
+            // Mostrar informações do mapeamento automático
+            const infoDiv = document.getElementById('autoMapInfo');
+            infoDiv.innerHTML = `<strong>✓ Mapeamento Automático:</strong> ${mappedCount} de ${totalFields} campos foram mapeados automaticamente com base em similaridade de descrição.`;
+            infoDiv.style.display = 'block';
+
+            updateProgress(50);
+            updateSteps(2);
+        }
+
+        // Limpar todos os mapeamentos
+        function clearAllMappings() {
+            if (confirm('Tem certeza que deseja limpar todos os mapeamentos?')) {
+                mappings = {};
+                renderSimplifiedMapping();
+                displayMappings();
+                document.getElementById('autoMapInfo').style.display = 'none';
+                document.getElementById('dataTableContainer').style.display = 'none';
+                document.getElementById('bulkFillSection').style.display = 'none';
+                document.getElementById('exportSectionCard').style.display = 'none';
+                updateProgress(33);
+                updateSteps(2);
+            }
+        }
+
+        // Manipulador de arquivo - Suporta múltiplas extensões
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showSpinner('Importando arquivo...');
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    setTimeout(() => {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        excelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        if (excelData.length > 0) {
+                            excelColumns = excelData[0];
+                            
+                            document.getElementById('fileInfo').textContent = `✓ Arquivo carregado: ${file.name} (${excelData.length - 1} linhas, ${excelColumns.length} colunas)`;
+                            document.getElementById('fileInfo').style.display = 'block';
+                            
+                            // Mostrar seção de mapeamento
+                            document.getElementById('mappingSectionCard').style.display = 'block';
+                            if (!document.getElementById('mappingContent').classList.contains('expanded')) {
+                                toggleCollapsible('mappingHeader', 'mappingContent');
+                            }
+                            
+                            // Renderizar mapeamento simplificado
+                            renderSimplifiedMapping();
+                            
+                            updateProgress(33);
+                            updateSteps(2);
+                            hideSpinner();
+                        }
+                    }, 500);
+                } catch (error) {
+                    hideSpinner();
+                    alert('Erro ao ler o arquivo: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Renderizar mapeamento simplificado com combos
+        function renderSimplifiedMapping() {
+            const container = document.getElementById('mappingRowsContainer');
+            container.innerHTML = '';
+            
+            // Mostrar apenas campos obrigatórios primeiro
+            const requiredFieldsToShow = requiredFields.filter(f => modelFields.includes(f));
+            
+            requiredFieldsToShow.forEach(field => {
+                const row = createMappingRow(field, true);
+                container.appendChild(row);
+            });
+
+            // Seção recolhida para campos opcionais
+            const optionalFields = modelFields.filter(f => !requiredFields.includes(f));
+            if (optionalFields.length > 0) {
+                const collapsibleDiv = document.createElement('div');
+                collapsibleDiv.style.marginTop = '20px';
+                
+                const header = document.createElement('div');
+                header.className = 'collapsible-header';
+                header.style.cursor = 'pointer';
+                header.style.marginBottom = '10px';
+                header.innerHTML = `
+                    <h4 style="color: #98FB98;">Campos Opcionais (${optionalFields.length})</h4>
+                    <span class="arrow">▼</span>
+                `;
+                
+                const content = document.createElement('div');
+                content.className = 'collapsible-content';
+                content.style.paddingTop = '0';
+                
+                optionalFields.forEach(field => {
+                    const row = createMappingRow(field, false);
+                    content.appendChild(row);
+                });
+                
+                header.addEventListener('click', () => {
+                    header.classList.toggle('collapsed');
+                    content.classList.toggle('expanded');
+                });
+                
+                collapsibleDiv.appendChild(header);
+                collapsibleDiv.appendChild(content);
+                container.appendChild(collapsibleDiv);
+            }
+
+            document.getElementById('simplifiedMappingContainer').style.display = 'block';
+        }
+
+        // Criar linha de mapeamento
+        function createMappingRow(field, isRequired) {
+            const row = document.createElement('div');
+            row.className = 'mapping-row';
+            row.id = 'mapping-' + field.replace(/\s+/g, '-');
+            
+            if (isRequired) {
+                row.classList.add('required');
+            }
+            
+            const label = document.createElement('label');
+            label.textContent = field;
+            
+            const select = document.createElement('select');
+            select.innerHTML = '<option value="">-- Selecione --</option>';
+            
+            excelColumns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                select.appendChild(option);
+            });
+            
+            select.addEventListener('change', function() {
+                if (this.value) {
+                    mappings[field] = this.value;
+                    row.classList.add('mapped');
+                } else {
+                    delete mappings[field];
+                    row.classList.remove('mapped');
+                }
+                displayMappings();
+                updateColumnDisplays();
+            });
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-mapping-btn';
+            removeBtn.textContent = 'Remover';
+            removeBtn.addEventListener('click', function() {
+                select.value = '';
+                delete mappings[field];
+                row.classList.remove('mapped');
+                displayMappings();
+                updateColumnDisplays();
+            });
+            
+            row.appendChild(label);
+            row.appendChild(select);
+            row.appendChild(removeBtn);
+            
+            return row;
+        }
+
+        // Atualizar displays das colunas
+        function updateColumnDisplays() {
+            document.querySelectorAll('.mapping-row').forEach(row => {
+                const fieldId = row.id.replace('mapping-', '');
+                let found = false;
+                
+                Object.entries(mappings).forEach(([field, excelCol]) => {
+                    const mappedFieldId = field.replace(/\s+/g, '-');
+                    if (mappedFieldId === fieldId) {
+                        const select = row.querySelector('select');
+                        if (select) {
+                            select.value = excelCol;
+                        }
+                        row.classList.add('mapped');
+                        found = true;
+                    }
+                });
+                
+                if (!found) {
+                    row.classList.remove('mapped');
+                }
+            });
+        }
+
+        function displayMappings() {
+            // Mostrar seção de exportação se houver mapeamentos
+            if (Object.keys(mappings).length > 0) {
+                document.getElementById('exportSectionCard').style.display = 'block';
+                if (!document.getElementById('exportContent').classList.contains('expanded')) {
+                    toggleCollapsible('exportHeader', 'exportContent');
+                }
+                processDataForTable();
+                displayDataTable();
+                setupBulkFillSection();
+                updateProgress(66);
+                updateSteps(3);
+            }
+        }
+
+        function processDataForTable() {
+            if (!excelData || excelData.length <= 1) return;
+            
+            processedData = [];
+            const dataRows = excelData.slice(1);
+            
+            dataRows.forEach(row => {
+                const processedRow = {};
+                
+                modelFields.forEach(field => {
+                    processedRow[field] = '';
+                });
+                
+                Object.entries(mappings).forEach(([modelField, excelField]) => {
+                    const excelColumnIndex = excelColumns.indexOf(excelField);
+                    if (excelColumnIndex !== -1 && row[excelColumnIndex] !== undefined) {
+                        let value = row[excelColumnIndex] || '';
+                        value = convertDateValue(value, modelField);
+                        processedRow[modelField] = value;
+                    }
+                });
+                
+                processedData.push(processedRow);
+            });
+            
+            totalPages = Math.ceil(processedData.length / itemsPerPage);
+            currentPage = 1;
+        }
+
+        function displayDataTable() {
+            const tableContainer = document.getElementById("dataTableContainer");
+            const tableHeader = document.getElementById("tableHeader");
+            const tableBody = document.getElementById("tableBody");
+            
+            if (processedData.length === 0) {
+                tableContainer.style.display = "none";
+                return;
+            }
+            
+            tableContainer.style.display = "block";
+            
+            tableHeader.innerHTML = "";
+            const headerRow = document.createElement("tr");
+            modelFields.forEach(field => {
+                const th = document.createElement("th");
+                th.textContent = field;
+                th.style.minWidth = "150px";
+                
+                if (requiredFields.includes(field)) {
+                    th.classList.add("required-column");
+                }
+                
+                headerRow.appendChild(th);
+            });
+            tableHeader.appendChild(headerRow);
+            
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+
+        const dateFields = [
+            'Data Aquisição',
+            'CALC SOCIE DATA INICIO',
+            'CALC FISCAL - DATA INICIO',
+            'CALC FISCAL - INFO DEPREC ACUM ATE (DATA)',
+            'DOC FISCAL - DATA EMISSÃO',
+            'DATA DE CAD DO BEM'
+        ];
+
+        function excelSerialToDate(serial) {
+            const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+            const days = parseFloat(serial);
+            const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+            
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const year = date.getUTCFullYear();
+            
+            return `${day}/${month}/${year}`;
+        }
+
+        function isExcelDateSerial(value) {
+            const num = parseFloat(value);
+            return !isNaN(num) && num >= 1 && num <= 2958465;
+        }
+
+        function convertDateValue(value, fieldName) {
+            if (!value || !dateFields.includes(fieldName)) {
+                return value;
+            }
+            
+            if (typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
+                return value;
+            }
+            
+            if (isExcelDateSerial(value)) {
+                return excelSerialToDate(value);
+            }
+            
+            return value;
+        }
+
+        function displayCurrentPage() {
+            const tableBody = document.getElementById("tableBody");
+            tableBody.innerHTML = "";
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, processedData.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                const row = document.createElement("tr");
+                const rowData = processedData[i];
+                
+                modelFields.forEach(field => {
+                    const td = document.createElement("td");
+                    
+                    if (requiredFields.includes(field)) {
+                        td.classList.add("required-column");
+                    }
+                    
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.value = rowData[field] || '';
+                    input.addEventListener('change', function() {
+                        processedData[i][field] = this.value;
+                    });
+                    
+                    td.appendChild(input);
+                    row.appendChild(td);
+                });
+                
+                tableBody.appendChild(row);
+            }
+            
+            document.getElementById("paginationInfo").textContent = 
+                `Página ${currentPage} de ${totalPages} (${processedData.length} registros)`;
+        }
+
+        function updatePaginationControls() {
+            document.getElementById("firstPageBtn").disabled = currentPage === 1;
+            document.getElementById("prevPageBtn").disabled = currentPage === 1;
+            document.getElementById("nextPageBtn").disabled = currentPage === totalPages;
+            document.getElementById("lastPageBtn").disabled = currentPage === totalPages;
+            document.getElementById("pageInput").value = currentPage;
+            document.getElementById("pageInput").max = totalPages;
+        }
+
+        function goToPage(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayCurrentPage();
+                updatePaginationControls();
+            }
+        }
+
+        function setupBulkFillSection() {
+            const columnSelector = document.getElementById("columnSelector");
+            columnSelector.innerHTML = '<option value="">Selecione uma coluna...</option>';
+            
+            modelFields.forEach(field => {
+                const option = document.createElement("option");
+                option.value = field;
+                option.textContent = field;
+                columnSelector.appendChild(option);
+            });
+            
+            document.getElementById("bulkFillSection").style.display = "block";
+            document.getElementById("bulkFillInfo").style.display = "block";
+        }
+
+        function fillEmptyFields() {
+            const columnName = document.getElementById("columnSelector").value;
+            const value = document.getElementById("bulkFillValue").value;
+            
+            if (!columnName || !value) {
+                alert("Selecione uma coluna e digite um valor");
+                return;
+            }
+            
+            let filledCount = 0;
+            processedData.forEach(row => {
+                if (!row[columnName] || row[columnName].trim() === '') {
+                    row[columnName] = value;
+                    filledCount++;
+                }
+            });
+            
+            displayCurrentPage();
+            alert(`${filledCount} campos vazios preenchidos`);
+        }
+
+        function fillAllFields() {
+            const columnName = document.getElementById("columnSelector").value;
+            const value = document.getElementById("bulkFillValue").value;
+            
+            if (!columnName || !value) {
+                alert("Selecione uma coluna e digite um valor");
+                return;
+            }
+            
+            processedData.forEach(row => {
+                row[columnName] = value;
+            });
+            
+            displayCurrentPage();
+            alert(`${processedData.length} campos preenchidos`);
+        }
+
+        function exportToTxt() {
+            if (processedData.length === 0) {
+                alert("Nenhum dado para exportar");
+                return;
+            }
+            
+            showSpinner('Gerando arquivo TXT...');
+            
+            setTimeout(() => {
+                let txtContent = "";
+                
+                modelFields.forEach(field => {
+                    txtContent += field + "\t";
+                });
+                txtContent += "\n";
+                
+                processedData.forEach((row, index) => {
+                    modelFields.forEach(field => {
+                        txtContent += (row[field] || "") + "\t";
+                    });
+                    txtContent += "\n";
+                    
+                    // Atualizar progresso
+                    const progress = (index / processedData.length) * 100;
+                    updateSpinnerProgress(progress);
+                });
+                
+                const element = document.createElement("a");
+                element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(txtContent));
+                element.setAttribute("download", "dados_bens_" + new Date().getTime() + ".txt");
+                element.style.display = "none";
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+                
+                hideSpinner();
+                updateSpinnerProgress(100);
+                
+                document.getElementById("exportStatus").innerHTML = 
+                    '<div style="background: rgba(144, 238, 144, 0.2); border: 1px solid rgba(144, 238, 144, 0.5); border-radius: 8px; padding: 15px; color: #98FB98;">✓ Arquivo exportado com sucesso!</div>';
+                
+                updateProgress(100);
+            }, 500);
+        }
+    </script>
+</body>
+</html>
